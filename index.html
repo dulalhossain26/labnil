@@ -134,6 +134,8 @@ input,select,textarea,button{font-family:inherit}
 .rptSeal{width:68px;height:68px;border:2.5px solid #000;border-radius:50%;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
 .rptSeal svg{width:62px;height:62px}
+.rptSeal a{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.rptSeal img{width:62px;height:62px;object-fit:contain;display:block}
 .rptHospName{flex:1;text-align:center}
 .rptHospName h1{font-size:17pt;font-weight:700;margin-bottom:2px}
 .rptHospName p{font-size:9pt;margin-bottom:1px}
@@ -892,16 +894,12 @@ function buildPrint(data){
   const sex=data.sex||'';
   const tech=data.technologist||currentUser||'Nishat Raihan';
 
-  const sealSVG=`<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="30" cy="30" r="28" fill="none" stroke="#000" stroke-width="1.5"/>
-    <circle cx="30" cy="30" r="22" fill="none" stroke="#000" stroke-width="0.8"/>
-    <text x="30" y="16" text-anchor="middle" font-size="4.5" font-weight="bold" font-family="serif">গণপ্রজাতন্ত্রী</text>
-    <text x="30" y="22" text-anchor="middle" font-size="4.5" font-weight="bold" font-family="serif">বাংলাদেশ সরকার</text>
-    <text x="30" y="30" text-anchor="middle" font-size="4" font-family="serif">স্বাস্থ্য ও পরিবার</text>
-    <text x="30" y="36" text-anchor="middle" font-size="4" font-family="serif">কল্যাণ মন্ত্রণালয়</text>
-    <ellipse cx="30" cy="45" rx="10" ry="4" fill="none" stroke="#000" stroke-width="0.7"/>
-    <text x="30" y="56" text-anchor="middle" font-size="3.5" font-family="serif">স্বাস্থ্য সেবা বিভাগ</text>
-  </svg>`;
+  const sealSVG=`<a href="https://github.com/dulalhossain26/labnil/blob/main/logo.png" target="_blank" rel="noopener noreferrer">
+    <img src="https://raw.githubusercontent.com/dulalhossain26/labnil/main/logo.png" 
+         alt="Government of Bangladesh Logo" 
+         width="62" 
+         height="62">
+</a>`;
 
   // Patient rows
   const piData=[
