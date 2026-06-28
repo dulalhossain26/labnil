@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab Report System – 250 Bedded General Hospital</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<style>
+/* ─── RESET & BASE ─── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0f2027;color:#e0e0e0;min-height:100vh}
+input,select,textarea,button{font-family:inherit}
+
+/* ─── LOGIN ─── */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364)}
+.loginBox{background:rgba(255,255,255,0.07);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.15);
+  border-radius:18px;padding:48px 40px;width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.4)}
+.loginBox .logo{font-size:48px;margin-bottom:8px}
+.loginBox h2{font-size:1.3rem;font-weight:700;color:#7ecfff;margin-bottom:4px}
+.loginBox p{font-size:.82rem;color:#aaa;margin-bottom:28px}
+.loginBox input{width:100%;padding:11px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);
+  background:rgba(255,255,255,0.08);color:#fff;margin-bottom:14px;font-size:.95rem}
+.loginBox input::placeholder{color:#888}
+.loginBox button{width:100%;padding:12px;background:linear-gradient(90deg,#1a73e8,#0d47a1);
+  color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;
+  transition:opacity .2s}
+.loginBox button:hover{opacity:.85}
+.loginErr{color:#ff6b6b;font-size:.85rem;margin-top:8px;display:none}
+
+/* ─── MAIN APP ─── */
+#appScreen{display:none;min-height:100vh;background:#f0f2f5}
+.topbar{background:linear-gradient(90deg,#1a237e,#283593);color:#fff;padding:10px 24px;
+  display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.topbar h1{font-size:1.05rem;font-weight:700;letter-spacing:.5px}
+.topbar span{font-size:.82rem;opacity:.8}
+.topbar button{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
+  color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:.82rem}
+
+.container{max-width:1100px;margin:24px auto;padding:0 16px}
+
+/* ─── TABS ─── */
+.tabs{display:flex;gap:8px;margin-bottom:20px}
+.tab{padding:9px 22px;border-radius:8px 8px 0 0;border:none;cursor:pointer;font-size:.9rem;font-weight:600;
+  background:#dce3f0;color:#555;transition:all .2s}
+.tab.active{background:#1a237e;color:#fff}
+
+/* ─── CARD ─── */
+.card{background:#fff;border-radius:0 12px 12px 12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);padding:28px}
+
+/* ─── FORM GRID ─── */
+.formGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.formGroup{display:flex;flex-direction:column;gap:4px}
+.formGroup label{font-size:.78rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.4px}
+.formGroup input,.formGroup select{padding:9px 12px;border:1.5px solid #d0d7e2;border-radius:7px;
+  font-size:.9rem;color:#222;transition:border .2s}
+.formGroup input:focus,.formGroup select:focus{outline:none;border-color:#1a237e}
+.formGroup input.required-field{border-color:#c0392b}
+
+.sectionTitle{font-size:1rem;font-weight:700;color:#1a237e;margin:20px 0 12px;
+  border-bottom:2px solid #e0e6f0;padding-bottom:6px}
+
+/* ─── TEST SELECTOR ─── */
+.testSelectorWrap{position:relative;margin-bottom:16px}
+.testSelectorWrap input{width:100%;padding:10px 14px;border:1.5px solid #d0d7e2;border-radius:8px;font-size:.9rem}
+.testDropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #1a237e;
+  border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 16px rgba(0,0,0,0.12)}
+.testDropdown div{padding:9px 14px;cursor:pointer;font-size:.88rem;border-bottom:1px solid #f0f0f0;color:#333}
+.testDropdown div:hover{background:#e8eaf6;color:#1a237e;font-weight:600}
+.selectedTests{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.testTag{background:#e8eaf6;color:#1a237e;padding:5px 12px;border-radius:20px;font-size:.82rem;
+  font-weight:600;display:flex;align-items:center;gap:6px}
+.testTag button{background:none;border:none;color:#c0392b;cursor:pointer;font-size:1rem;line-height:1}
+
+/* ─── PARAMETERS TABLE ─── */
+.paramTable{width:100%;border-collapse:collapse;margin-bottom:16px}
+.paramTable th{background:#1a237e;color:#fff;padding:8px 12px;font-size:.8rem;text-align:left}
+.paramTable td{padding:6px 10px;border-bottom:1px solid #e8eaf6;vertical-align:middle}
+.paramTable tr:hover td{background:#f5f7ff}
+.paramTable input{width:100%;border:1px solid #d0d7e2;border-radius:5px;padding:5px 8px;font-size:.88rem}
+.paramTable .normalRange{font-size:.78rem;color:#555;font-style:italic}
+.paramTable .paramName{font-size:.85rem;font-weight:600;color:#333}
+.paramTable .unit{font-size:.78rem;color:#777}
+.groupHeader td{background:#e8eaf6!important;font-weight:700;color:#1a237e;font-size:.85rem;padding:7px 10px}
+
+/* ─── BUTTONS ─── */
+.btnRow{display:flex;gap:12px;margin-top:20px;justify-content:flex-end}
+.btn{padding:10px 24px;border-radius:8px;border:none;cursor:pointer;font-size:.9rem;font-weight:600;transition:all .2s}
+.btn-primary{background:linear-gradient(90deg,#1a237e,#283593);color:#fff}
+.btn-primary:hover{opacity:.85}
+.btn-success{background:linear-gradient(90deg,#1b5e20,#2e7d32);color:#fff}
+.btn-success:hover{opacity:.85}
+.btn-secondary{background:#e0e0e0;color:#333}
+.btn-secondary:hover{background:#ccc}
+.btn-danger{background:#c0392b;color:#fff}
+
+/* ─── SAVED REPORTS TABLE ─── */
+.reportsTable{width:100%;border-collapse:collapse}
+.reportsTable th{background:#1a237e;color:#fff;padding:10px 12px;font-size:.82rem;text-align:left}
+.reportsTable td{padding:9px 12px;border-bottom:1px solid #e8eaf6;font-size:.85rem}
+.reportsTable tr:hover td{background:#f5f7ff}
+.badge{padding:3px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.badge-green{background:#e8f5e9;color:#1b5e20}
+
+/* ─── STATUS MSG ─── */
+.statusMsg{padding:10px 16px;border-radius:8px;margin-top:12px;font-size:.88rem;display:none}
+.statusMsg.success{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;display:block}
+.statusMsg.error{background:#ffebee;color:#b71c1c;border:1px solid #ef9a9a;display:block}
+
+/* ─── SEARCH BAR ─── */
+.searchBar{display:flex;gap:10px;margin-bottom:16px}
+.searchBar input{flex:1;padding:9px 14px;border:1.5px solid #d0d7e2;border-radius:7px;font-size:.9rem}
+.searchBar button{padding:9px 18px;border-radius:7px;border:none;background:#1a237e;color:#fff;cursor:pointer;font-weight:600}
+
+/* ══════════════════════════════════════════
+   PRINT REPORT STYLES
+══════════════════════════════════════════ */
+#printModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;
+  align-items:center;justify-content:center;overflow-y:auto;padding:20px}
+#printModal.open{display:flex}
+.printWrap{background:#fff;width:210mm;min-height:297mm;margin:auto;position:relative;font-family:'Times New Roman',serif;color:#000}
+.printActions{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:10000}
+.printActions button{padding:9px 20px;border-radius:7px;border:none;cursor:pointer;font-weight:700;font-size:.9rem}
+.btnPrint{background:#1a237e;color:#fff}
+.btnClose{background:#c0392b;color:#fff}
+
+/* Report inner */
+.rpt{padding:12mm 14mm;min-height:297mm;display:flex;flex-direction:column}
+
+/* Header */
+.rptHeader{display:flex;align-items:center;gap:12px;border-bottom:3px double #000;padding-bottom:8px;margin-bottom:6px}
+.rptSeal{width:70px;height:70px;border:3px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;text-align:center;font-weight:700;flex-shrink:0;background:#fff}
+.rptSeal svg{width:60px;height:60px}
+.rptHospName{flex:1;text-align:center}
+.rptHospName h1{font-size:18pt;font-weight:700;margin-bottom:2px;font-family:'Times New Roman',serif}
+.rptHospName p{font-size:9pt;margin-bottom:1px}
+
+/* Barcodes */
+.barcodeRow{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+
+/* Report Title */
+.rptTitle{text-align:center;font-size:14pt;font-weight:700;letter-spacing:2px;
+  border-top:1.5px solid #000;border-bottom:1.5px solid #000;padding:4px 0;margin-bottom:8px}
+
+/* Patient Info Grid */
+.patientGrid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #000;margin-bottom:8px}
+.patientGrid .pi{display:grid;grid-template-columns:130px 1fr;border-bottom:1px solid #ccc}
+.patientGrid .pi:last-child{border-bottom:none}
+.patientGrid .pi .lbl{font-size:9pt;font-weight:700;padding:3px 6px;border-right:1px solid #ccc;background:#f8f8f8}
+.patientGrid .pi .val{font-size:9pt;padding:3px 6px}
+.patientGrid .col{border-right:1px solid #000}
+.patientGrid .col:last-child{border-right:none}
+
+/* Results Table */
+.rptTable{width:100%;border-collapse:collapse;margin-bottom:auto}
+.rptTable th{background:#000;color:#fff;padding:5px 8px;font-size:9pt;text-align:left;border:1px solid #000}
+.rptTable td{padding:4px 8px;font-size:9.5pt;border:1px solid #ccc;vertical-align:middle}
+.rptTable .testGroup{background:#e8e8e8;font-weight:700;font-size:9.5pt;padding:5px 8px;border:1px solid #999}
+.rptTable .bold{font-weight:700}
+.rptTable .abnormal{font-weight:700}
+.rptTable .normalVal{font-size:8.5pt;color:#444}
+.rptTable .unitVal{font-size:8.5pt;color:#555}
+
+/* Footer / Signatures */
+.rptFooter{margin-top:auto;padding-top:16px;border-top:1px solid #000}
+.sigRow{display:flex;justify-content:space-between;align-items:flex-end;padding-top:12px}
+.sigBox{text-align:center;min-width:160px}
+.sigBox .sigLine{border-top:1px solid #000;margin-bottom:4px;margin-top:32px}
+.sigBox p{font-size:9pt;line-height:1.5}
+.sigBox .sigName{font-weight:700;font-size:9.5pt}
+.printedBy{font-size:8pt;color:#555;margin-top:4px}
+
+@media print{
+  body *{visibility:hidden}
+  #printModal,#printModal *{visibility:visible}
+  #printModal{position:absolute;top:0;left:0;padding:0;background:#fff}
+  .printWrap{width:100%;box-shadow:none}
+  .printActions{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="loginScreen">
+  <div class="loginBox">
+    <div class="logo">🏥</div>
+    <h2>250 Bedded General Hospital</h2>
+    <p>Nilphamari — Lab Report System</p>
+    <input type="text" id="loginUser" placeholder="Username" autocomplete="off">
+    <input type="password" id="loginPass" placeholder="Password">
+    <button onclick="doLogin()">Login</button>
+    <div class="loginErr" id="loginErr">Invalid username or password.</div>
+  </div>
+</div>
+
+<!-- ══════════ MAIN APP ══════════ -->
+<div id="appScreen">
+  <div class="topbar">
+    <h1>🏥 Lab Report System — 250 Bedded General Hospital, Nilphamari</h1>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span id="loggedUser"></span>
+      <button onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('newReport')">➕ New Report</button>
+      <button class="tab" onclick="showTab('savedReports')">📋 Saved Reports</button>
+    </div>
+
+    <!-- ═══ NEW REPORT TAB ═══ -->
+    <div id="newReport" class="card">
+
+      <div class="sectionTitle">📋 Patient Information</div>
+      <div class="formGrid">
+        <div class="formGroup">
+          <label>Patient ID *</label>
+          <input type="text" id="patientId" placeholder="e.g. BDH2544223">
+        </div>
+        <div class="formGroup">
+          <label>Bill ID *</label>
+          <input type="text" id="billId" placeholder="e.g. INV/2025/0826">
+        </div>
+        <div class="formGroup">
+          <label>Patient Name *</label>
+          <input type="text" id="patientName" placeholder="Full name">
+        </div>
+        <div class="formGroup">
+          <label>Age (Year) *</label>
+          <input type="number" id="ageY" placeholder="Years" min="0" max="120">
+        </div>
+        <div class="formGroup">
+          <label>Age Month (optional)</label>
+          <input type="number" id="ageM" placeholder="Months" min="0" max="11">
+        </div>
+        <div class="formGroup">
+          <label>Age Day (optional)</label>
+          <input type="number" id="ageD" placeholder="Days" min="0" max="30">
+        </div>
+        <div class="formGroup">
+          <label>Sex *</label>
+          <select id="sex">
+            <option value="">-- Select --</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="formGroup">
+          <label>Patient From</label>
+          <select id="patientFrom">
+            <option value="OPD">OPD</option>
+            <option value="IPD">IPD</option>
+            <option value="Emergency">Emergency</option>
+          </select>
+        </div>
+        <div class="formGroup">
+          <label>Referred By</label>
+          <input type="text" id="referredBy" placeholder="Doctor name (optional)">
+        </div>
+        <div class="formGroup">
+          <label>NID (optional)</label>
+          <input type="text" id="nid" placeholder="National ID">
+        </div>
+        <div class="formGroup">
+          <label>Contact No (optional)</label>
+          <input type="text" id="contactNo" placeholder="Phone number">
+        </div>
+        <div class="formGroup">
+          <label>Collection Date &amp; Time</label>
+          <input type="text" id="collectionDate" readonly>
+        </div>
+      </div>
+
+      <div class="sectionTitle">🔬 Select Tests</div>
+      <div class="testSelectorWrap">
+        <input type="text" id="testSearch" placeholder="🔍 Search test name (e.g. CBC, Urine, HBsAg...)" oninput="filterTests()" onfocus="showDropdown()" onblur="setTimeout(hideDropdown,200)">
+        <div class="testDropdown" id="testDropdown"></div>
+      </div>
+      <div class="selectedTests" id="selectedTests"></div>
+
+      <div id="paramSection"></div>
+
+      <!-- Google Sheets Config (hidden - URL is pre-configured) -->
+      <input type="hidden" id="sheetUrl" value="https://script.google.com/macros/s/AKfycbyG7hRXF75DOiEdBg08Z05itxAz_7pI6cwHJBFGaNBzerzUVKieOLlnJybaNeksvC-SAQ/exec">
+      <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px 16px;margin-top:8px;font-size:.85rem;color:#1b5e20">
+        ☁️ <strong>Google Sheets:</strong> Connected → <a href="https://docs.google.com/spreadsheets/d/1gSH59Hh4vQMN7n-KdSFWS7-qbrugXq7zlKbYQcO6QLI/edit" target="_blank" style="color:#1b5e20">Open Sheet ↗</a>
+      </div>
+
+      <div class="btnRow">
+        <button class="btn btn-secondary" onclick="clearForm()">🔄 Clear Form</button>
+        <button class="btn btn-success" onclick="saveReport()">💾 Save to Google Sheets</button>
+        <button class="btn btn-primary" onclick="previewReport()">🖨️ Preview &amp; Print</button>
+      </div>
+      <div class="statusMsg" id="statusMsg"></div>
+    </div>
+
+    <!-- ═══ SAVED REPORTS TAB ═══ -->
+    <div id="savedReports" class="card" style="display:none">
+      <div class="sectionTitle">📁 Saved Reports (Local)</div>
+      <div class="searchBar">
+        <input type="text" id="searchSaved" placeholder="Search by Patient Name, ID, or Bill ID..." oninput="renderSaved()">
+        <button onclick="renderSaved()">Search</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="reportsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Patient ID</th>
+              <th>Bill ID</th>
+              <th>Patient Name</th>
+              <th>Age/Sex</th>
+              <th>Tests</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="savedTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PRINT MODAL ══════════ -->
+<div id="printModal">
+  <div class="printActions">
+    <button class="btnPrint" onclick="window.print()">🖨️ Print</button>
+    <button class="btnClose" onclick="closePrint()">✕ Close</button>
+  </div>
+  <div class="printWrap">
+    <div class="rpt" id="rptContent"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA — ALL TESTS WITH PARAMETERS
+// ══════════════════════════════════════════
+const ALL_TESTS = {
+  "CBC": {
+    label:"Complete Blood Count (CBC)",
+    sample:"Blood (EDTA)",
+    params:[
+      {id:"hb",    name:"Haemoglobin (Hb)",     unit:"g/dL",  normalM:"13.5 – 17.5",  normalF:"11.5 – 15.5"},
+      {id:"rbc",   name:"RBC Count",             unit:"million/µL", normalM:"4.5 – 5.9", normalF:"3.8 – 5.2"},
+      {id:"wbc",   name:"Total WBC Count",       unit:"cells/µL",  normal:"4,000 – 11,000"},
+      {id:"plt",   name:"Platelet Count",        unit:"cells/µL",  normal:"150,000 – 450,000"},
+      {id:"pcv",   name:"PCV / Haematocrit",     unit:"%",     normalM:"40 – 52",      normalF:"36 – 48"},
+      {id:"mcv",   name:"MCV",                   unit:"fL",    normal:"76 – 100"},
+      {id:"mch",   name:"MCH",                   unit:"pg",    normal:"27 – 33"},
+      {id:"mchc",  name:"MCHC",                  unit:"g/dL",  normal:"31.5 – 34.5"},
+      {id:"esr",   name:"ESR",                   unit:"mm/hr", normalM:"0 – 15",       normalF:"0 – 20"},
+      {id:"neut",  name:"Neutrophil",            unit:"%",     normal:"40 – 75"},
+      {id:"lymph", name:"Lymphocyte",            unit:"%",     normal:"20 – 45"},
+      {id:"mono",  name:"Monocyte",              unit:"%",     normal:"2 – 10"},
+      {id:"eosi",  name:"Eosinophil",            unit:"%",     normal:"1 – 6"},
+      {id:"baso",  name:"Basophil",              unit:"%",     normal:"0 – 1"},
+      {id:"band",  name:"Band Cell",             unit:"%",     normal:"0 – 5"},
+      {id:"retic", name:"Reticulocyte Count",    unit:"%",     normal:"0.5 – 2.5"},
+    ]
+  },
+  "RBS": {
+    label:"Random Blood Sugar (RBS)",
+    sample:"Blood (F)",
+    params:[{id:"rbs",name:"Random Blood Glucose",unit:"mmol/L",normal:"3.9 – 7.8"}]
+  },
+  "FBS": {
+    label:"Fasting Blood Sugar (FBS)",
+    sample:"Blood (F) — Fasting",
+    params:[{id:"fbs",name:"Fasting Blood Glucose",unit:"mmol/L",normal:"3.9 – 5.6"}]
+  },
+  "PPBS": {
+    label:"Post Prandial Blood Sugar (PPBS)",
+    sample:"Blood (F)",
+    params:[{id:"ppbs",name:"2hr Post Prandial Blood Glucose",unit:"mmol/L",normal:"< 7.8"}]
+  },
+  "HbA1c": {
+    label:"Glycated Haemoglobin (HbA1c)",
+    sample:"Blood (EDTA)",
+    params:[
+      {id:"hba1c",name:"HbA1c",unit:"%",normal:"< 5.7 (Normal)  5.7–6.4 (Pre-diabetic)  ≥6.5 (Diabetic)"}
+    ]
+  },
+  "S. Creatinine": {
+    label:"Serum Creatinine",
+    sample:"Blood (Serum)",
+    params:[{id:"screat",name:"Serum Creatinine",unit:"mg/dL",normalM:"0.74 – 1.35",normalF:"0.59 – 1.04"}]
+  },
+  "S. Urea": {
+    label:"Serum Urea / BUN",
+    sample:"Blood (Serum)",
+    params:[
+      {id:"surea",name:"Serum Urea",unit:"mg/dL",normal:"17 – 49"},
+      {id:"bun",  name:"Blood Urea Nitrogen (BUN)",unit:"mg/dL",normal:"7 – 20"}
+    ]
+  },
+  "Uric Acid": {
+    label:"Serum Uric Acid",
+    sample:"Blood (Serum)",
+    params:[{id:"uricacid",name:"Serum Uric Acid",unit:"mg/dL",normalM:"3.5 – 7.2",normalF:"2.6 – 6.0"}]
+  },
+  "SGPT": {
+    label:"SGPT / ALT",
+    sample:"Blood (Serum)",
+    params:[{id:"sgpt",name:"SGPT (ALT)",unit:"U/L",normalM:"7 – 56",normalF:"7 – 45"}]
+  },
+  "SGOT": {
+    label:"SGOT / AST",
+    sample:"Blood (Serum)",
+    params:[{id:"sgot",name:"SGOT (AST)",unit:"U/L",normalM:"10 – 40",normalF:"10 – 35"}]
+  },
+  "LFT": {
+    label:"Liver Function Test (LFT)",
+    sample:"Blood (Serum)",
+    params:[
+      {id:"tbili",name:"Total Bilirubin",unit:"mg/dL",normal:"0.2 – 1.2"},
+      {id:"dbili",name:"Direct Bilirubin",unit:"mg/dL",normal:"0.0 – 0.3"},
+      {id:"ibili",name:"Indirect Bilirubin",unit:"mg/dL",normal:"0.1 – 0.9"},
+      {id:"salp", name:"Serum ALP",unit:"U/L",normal:"44 – 147"},
+      {id:"sgpt2",name:"SGPT (ALT)",unit:"U/L",normalM:"7 – 56",normalF:"7 – 45"},
+      {id:"sgot2",name:"SGOT (AST)",unit:"U/L",normalM:"10 – 40",normalF:"10 – 35"},
+      {id:"tp",   name:"Total Protein",unit:"g/dL",normal:"6.0 – 8.3"},
+      {id:"alb",  name:"Albumin",unit:"g/dL",normal:"3.5 – 5.0"},
+      {id:"glob", name:"Globulin",unit:"g/dL",normal:"2.0 – 3.5"},
+      {id:"agr",  name:"A/G Ratio",unit:"",normal:"1.0 – 2.5"},
+    ]
+  },
+  "RFT": {
+    label:"Renal Function Test (RFT)",
+    sample:"Blood (Serum)",
+    params:[
+      {id:"rft_creat",name:"Serum Creatinine",unit:"mg/dL",normalM:"0.74–1.35",normalF:"0.59–1.04"},
+      {id:"rft_urea", name:"Blood Urea",unit:"mg/dL",normal:"17 – 49"},
+      {id:"rft_uric", name:"Uric Acid",unit:"mg/dL",normalM:"3.5–7.2",normalF:"2.6–6.0"},
+      {id:"rft_na",   name:"Sodium (Na⁺)",unit:"mEq/L",normal:"135 – 145"},
+      {id:"rft_k",    name:"Potassium (K⁺)",unit:"mEq/L",normal:"3.5 – 5.1"},
+      {id:"rft_cl",   name:"Chloride (Cl⁻)",unit:"mEq/L",normal:"98 – 106"},
+    ]
+  },
+  "Lipid Profile": {
+    label:"Lipid Profile",
+    sample:"Blood (Serum) — Fasting",
+    params:[
+      {id:"tchol",name:"Total Cholesterol",unit:"mg/dL",normal:"< 200"},
+      {id:"trig", name:"Triglyceride",unit:"mg/dL",normal:"< 150"},
+      {id:"hdl",  name:"HDL Cholesterol",unit:"mg/dL",normalM:"> 40",normalF:"> 50"},
+      {id:"ldl",  name:"LDL Cholesterol",unit:"mg/dL",normal:"< 100"},
+      {id:"vldl", name:"VLDL Cholesterol",unit:"mg/dL",normal:"2 – 30"},
+      {id:"chdratio",name:"Cholesterol / HDL Ratio",unit:"",normal:"< 5"},
+    ]
+  },
+  "Thyroid": {
+    label:"Thyroid Function Test",
+    sample:"Blood (Serum)",
+    params:[
+      {id:"tsh",  name:"TSH",unit:"µIU/mL",normal:"0.4 – 4.0"},
+      {id:"t3",   name:"T3 (Triiodothyronine)",unit:"nmol/L",normal:"1.2 – 2.8"},
+      {id:"t4",   name:"T4 (Thyroxine)",unit:"nmol/L",normal:"66 – 181"},
+      {id:"ft3",  name:"Free T3 (FT3)",unit:"pmol/L",normal:"3.1 – 6.8"},
+      {id:"ft4",  name:"Free T4 (FT4)",unit:"pmol/L",normal:"12 – 22"},
+    ]
+  },
+  "S. Cholesterol": {
+    label:"Serum Cholesterol",
+    sample:"Blood (Serum)",
+    params:[{id:"scholest",name:"Serum Cholesterol",unit:"mg/dL",normal:"< 200 (Desirable)"}]
+  },
+  "HBsAg": {
+    label:"Hepatitis B Surface Antigen (HBsAg)",
+    sample:"Blood (Serum)",
+    params:[{id:"hbsag",name:"HBsAg",unit:"",normal:"Negative",type:"qualitative",
+      options:["Negative","Positive","Weakly Positive"]}]
+  },
+  "Anti-HCV": {
+    label:"Anti-HCV Antibody",
+    sample:"Blood (Serum)",
+    params:[{id:"hcv",name:"Anti-HCV",unit:"",normal:"Negative",type:"qualitative",
+      options:["Negative","Positive","Weakly Positive"]}]
+  },
+  "HIV": {
+    label:"HIV I & II Antibody",
+    sample:"Blood (Serum)",
+    params:[{id:"hiv",name:"HIV I & II",unit:"",normal:"Non-Reactive",type:"qualitative",
+      options:["Non-Reactive","Reactive"]}]
+  },
+  "VDRL": {
+    label:"VDRL Test (Syphilis)",
+    sample:"Blood (Serum)",
+    params:[{id:"vdrl",name:"VDRL",unit:"",normal:"Non-Reactive",type:"qualitative",
+      options:["Non-Reactive","Reactive","Weakly Reactive"]}]
+  },
+  "RA Test": {
+    label:"Rheumatoid Arthritis (RA) Factor",
+    sample:"Blood (Serum)",
+    params:[{id:"ra",name:"RA Factor",unit:"IU/mL",normal:"< 14"},
+            {id:"rainterp",name:"Interpretation",unit:"",normal:"Negative",type:"qualitative",
+             options:["Negative","Positive"]}]
+  },
+  "ASO Titre": {
+    label:"ASO Titre",
+    sample:"Blood (Serum)",
+    params:[{id:"aso",name:"ASO Titre",unit:"IU/mL",normal:"< 200"},
+            {id:"asointerp",name:"Interpretation",unit:"",normal:"Negative",type:"qualitative",
+             options:["Negative","Positive"]}]
+  },
+  "CRP": {
+    label:"C-Reactive Protein (CRP)",
+    sample:"Blood (Serum)",
+    params:[{id:"crp",name:"CRP",unit:"mg/L",normal:"< 5.0"},
+            {id:"crpinterp",name:"Interpretation",unit:"",normal:"Negative",type:"qualitative",
+             options:["Negative","Positive"]}]
+  },
+  "Widal": {
+    label:"Widal Test",
+    sample:"Blood (Serum)",
+    params:[
+      {id:"w_oh",name:"Salmonella typhi 'O' (AH)",unit:"",normal:"< 1:80",type:"widal"},
+      {id:"w_th",name:"Salmonella typhi 'H' (TH)",unit:"",normal:"< 1:80",type:"widal"},
+      {id:"w_ah",name:"Salmonella paratyphi 'A' (H)",unit:"",normal:"< 1:80",type:"widal"},
+      {id:"w_bh",name:"Salmonella paratyphi 'B' (H)",unit:"",normal:"< 1:80",type:"widal"},
+    ]
+  },
+  "Blood Group": {
+    label:"Blood Grouping & Rh Factor",
+    sample:"Blood (EDTA)",
+    params:[
+      {id:"bg",name:"Blood Group",unit:"",normal:"",type:"qualitative",
+       options:["A+","A-","B+","B-","AB+","AB-","O+","O-"]},
+      {id:"rh",name:"Rh Factor",unit:"",normal:"",type:"qualitative",
+       options:["Positive (+ve)","Negative (-ve)"]}
+    ]
+  },
+  "MP": {
+    label:"Malaria Parasite (MP) – Peripheral Blood Film",
+    sample:"Blood (EDTA)",
+    params:[{id:"mp",name:"Malaria Parasite",unit:"",normal:"Not Found",type:"qualitative",
+      options:["Not Found","P. falciparum found","P. vivax found","P. malariae found"]}]
+  },
+  "Filaria": {
+    label:"Filaria Test (Microfilaria)",
+    sample:"Blood (EDTA)",
+    params:[{id:"filaria",name:"Microfilaria",unit:"",normal:"Not Found",type:"qualitative",
+      options:["Not Found","Found"]}]
+  },
+  "Dengue NS1": {
+    label:"Dengue NS1 Antigen",
+    sample:"Blood (Serum)",
+    params:[{id:"ns1",name:"Dengue NS1 Antigen",unit:"",normal:"Negative",type:"qualitative",
+      options:["Negative","Positive"]}]
+  },
+  "Dengue IgG/IgM": {
+    label:"Dengue IgG & IgM Antibody",
+    sample:"Blood (Serum)",
+    params:[
+      {id:"digg",name:"Dengue IgG",unit:"",normal:"Negative",type:"qualitative",options:["Negative","Positive"]},
+      {id:"digm",name:"Dengue IgM",unit:"",normal:"Negative",type:"qualitative",options:["Negative","Positive"]},
+    ]
+  },
+  "Pregnancy Test": {
+    label:"Pregnancy Test (Urine hCG)",
+    sample:"Urine",
+    params:[{id:"preg",name:"Urine hCG (Pregnancy Test)",unit:"",normal:"Negative",type:"qualitative",
+      options:["Negative","Positive"]}]
+  },
+  "Urine R/M/E": {
+    label:"Urine Routine / Microscopy / Examination",
+    sample:"Urine (Mid-stream)",
+    params:[
+      {id:"ucolor",  name:"Colour",unit:"",normal:"Pale Yellow",type:"qualitative",
+       options:["Pale Yellow","Yellow","Dark Yellow","Amber","Red","Brown","Clear"]},
+      {id:"uappear", name:"Appearance",unit:"",normal:"Clear",type:"qualitative",
+       options:["Clear","Slightly Turbid","Turbid","Hazy"]},
+      {id:"uph",     name:"pH",unit:"",normal:"4.5 – 8.0"},
+      {id:"usg",     name:"Specific Gravity",unit:"",normal:"1.005 – 1.030"},
+      {id:"uprot",   name:"Protein",unit:"",normal:"Nil",type:"qualitative",
+       options:["Nil","Trace","+1","+2","+3","+4"]},
+      {id:"ugluc",   name:"Glucose",unit:"",normal:"Nil",type:"qualitative",
+       options:["Nil","Trace","+1","+2","+3"]},
+      {id:"uketone", name:"Ketone",unit:"",normal:"Nil",type:"qualitative",options:["Nil","Trace","+1","+2"]},
+      {id:"ubili2",  name:"Bilirubin",unit:"",normal:"Nil",type:"qualitative",options:["Nil","Trace","+1","+2"]},
+      {id:"uuro",    name:"Urobilinogen",unit:"",normal:"Normal",type:"qualitative",
+       options:["Normal","Increased","Decreased"]},
+      {id:"unitr",   name:"Nitrite",unit:"",normal:"Negative",type:"qualitative",options:["Negative","Positive"]},
+      {id:"ublood",  name:"Blood",unit:"",normal:"Nil",type:"qualitative",options:["Nil","Trace","+1","+2"]},
+      {id:"uleu",    name:"Leucocyte Esterase",unit:"",normal:"Negative",type:"qualitative",
+       options:["Negative","Trace","1+","2+","3+"]},
+      // Microscopy
+      {id:"upus",    name:"Pus Cell (WBC)",unit:"/HPF",normal:"0 – 5"},
+      {id:"urbc2",   name:"RBC",unit:"/HPF",normal:"0 – 3"},
+      {id:"uepith",  name:"Epithelial Cell",unit:"/HPF",normal:"0 – 5"},
+      {id:"ucast",   name:"Cast",unit:"",normal:"Nil",type:"qualitative",
+       options:["Nil","Hyaline cast","Granular cast","RBC cast","WBC cast"]},
+      {id:"ucryst",  name:"Crystal",unit:"",normal:"Nil",type:"qualitative",
+       options:["Nil","Calcium Oxalate","Uric Acid Crystal","Triple Phosphate"]},
+      {id:"ubact",   name:"Bacteria",unit:"",normal:"Nil",type:"qualitative",options:["Nil","Few","Moderate","Many"]},
+    ]
+  },
+  "Stool R/M/E": {
+    label:"Stool Routine / Microscopy / Examination",
+    sample:"Stool",
+    params:[
+      {id:"stcolor",name:"Colour",unit:"",normal:"Brown",type:"qualitative",
+       options:["Brown","Yellow","Green","Black","Red","Clay coloured"]},
+      {id:"stcon",  name:"Consistency",unit:"",normal:"Formed",type:"qualitative",
+       options:["Formed","Semi-formed","Soft","Watery","Loose"]},
+      {id:"stmucus",name:"Mucus",unit:"",normal:"Nil",type:"qualitative",options:["Nil","Present"]},
+      {id:"stblood",name:"Blood",unit:"",normal:"Nil",type:"qualitative",options:["Nil","Present"]},
+      {id:"stpus",  name:"Pus Cell",unit:"/HPF",normal:"0 – 2"},
+      {id:"strbc",  name:"RBC",unit:"/HPF",normal:"Nil"},
+      {id:"stova",  name:"Ova / Cyst",unit:"",normal:"Not Found",type:"qualitative",
+       options:["Not Found","Ascaris lumbricoides","Hookworm ova","Giardia cyst","Entamoeba histolytica cyst","Others"]},
+      {id:"stbact", name:"Bacteria",unit:"",normal:"Normal flora",type:"qualitative",
+       options:["Normal flora","No significant growth","Others"]},
+    ]
+  },
+  "Dope Test": {
+    label:"Dope Test (Urine Drug Screen)",
+    sample:"Urine",
+    params:[
+      {id:"dalcohol",name:"Alcohol",unit:"",normal:"Negative",type:"qualitative",options:["Negative","Positive"]},
+      {id:"damp",   name:"Amphetamin",unit:"",normal:"Negative",type:"qualitative",options:["Negative","Positive"]},
+      {id:"dbenzo", name:"Benzodiazepines",unit:"",normal:"Negative",type:"qualitative",options:["Negative","Positive"]},
+      {id:"dcanna", name:"Canabinoids",unit:"",normal:"Negative",type:"qualitative",options:["Negative","Positive"]},
+      {id:"dopiates",name:"Opiates",unit:"",normal:"Negative",type:"qualitative",options:["Negative","Positive"]},
+      {id:"dcocaine",name:"Cocaine",unit:"",normal:"Negative",type:"qualitative",options:["Negative","Positive"]},
+      {id:"dmeth",  name:"Methamphetamine",unit:"",normal:"Negative",type:"qualitative",options:["Negative","Positive"]},
+    ]
+  },
+  "Sputum AFB": {
+    label:"Sputum AFB (Acid Fast Bacilli)",
+    sample:"Sputum",
+    params:[
+      {id:"afb1",name:"Sample 1 — AFB",unit:"",normal:"No AFB seen",type:"qualitative",
+       options:["No AFB seen","AFB seen (+)","AFB seen (++)","AFB seen (+++)"]},
+      {id:"afb2",name:"Sample 2 — AFB",unit:"",normal:"No AFB seen",type:"qualitative",
+       options:["No AFB seen","AFB seen (+)","AFB seen (++)","AFB seen (+++)"]},
+    ]
+  },
+  "Serum Calcium": {
+    label:"Serum Calcium",
+    sample:"Blood (Serum)",
+    params:[{id:"scal",name:"Serum Calcium",unit:"mg/dL",normal:"8.5 – 10.5"}]
+  },
+  "Serum Phosphorus": {
+    label:"Serum Phosphorus",
+    sample:"Blood (Serum)",
+    params:[{id:"sphos",name:"Serum Phosphorus",unit:"mg/dL",normal:"2.5 – 4.5"}]
+  },
+  "Sodium": {
+    label:"Serum Sodium (Na⁺)",
+    sample:"Blood (Serum)",
+    params:[{id:"sna",name:"Serum Sodium",unit:"mEq/L",normal:"135 – 145"}]
+  },
+  "Potassium": {
+    label:"Serum Potassium (K⁺)",
+    sample:"Blood (Serum)",
+    params:[{id:"sk",name:"Serum Potassium",unit:"mEq/L",normal:"3.5 – 5.1"}]
+  },
+  "S. Iron": {
+    label:"Serum Iron & TIBC",
+    sample:"Blood (Serum)",
+    params:[
+      {id:"siron",name:"Serum Iron",unit:"µg/dL",normalM:"65–175",normalF:"50–170"},
+      {id:"tibc", name:"TIBC",unit:"µg/dL",normal:"250 – 370"},
+      {id:"fesat",name:"Transferrin Saturation",unit:"%",normal:"15 – 50"},
+    ]
+  },
+  "Ferritin": {
+    label:"Serum Ferritin",
+    sample:"Blood (Serum)",
+    params:[{id:"ferritin",name:"Serum Ferritin",unit:"ng/mL",normalM:"24 – 336",normalF:"11 – 307"}]
+  },
+  "Vitamin D": {
+    label:"Vitamin D (25-OH)",
+    sample:"Blood (Serum)",
+    params:[{id:"vitd",name:"25-Hydroxy Vitamin D",unit:"ng/mL",normal:"30 – 100 (Sufficient)  20–29 (Insufficient)  <20 (Deficient)"}]
+  },
+  "Vitamin B12": {
+    label:"Vitamin B12",
+    sample:"Blood (Serum)",
+    params:[{id:"vitb12",name:"Vitamin B12",unit:"pg/mL",normal:"200 – 900"}]
+  },
+  "PSA": {
+    label:"PSA (Prostate Specific Antigen)",
+    sample:"Blood (Serum)",
+    params:[{id:"psa",name:"Total PSA",unit:"ng/mL",normal:"< 4.0"}]
+  },
+  "Troponin I": {
+    label:"Cardiac Troponin I",
+    sample:"Blood (Serum)",
+    params:[{id:"tropi",name:"Troponin I",unit:"ng/mL",normal:"< 0.04",type:"qualitative",
+      options:["Negative","Positive","Weakly Positive"]}]
+  },
+  "D-Dimer": {
+    label:"D-Dimer",
+    sample:"Blood (Plasma)",
+    params:[{id:"ddimer",name:"D-Dimer",unit:"µg/mL FEU",normal:"< 0.50"}]
+  },
+  "PT/INR": {
+    label:"Prothrombin Time (PT/INR)",
+    sample:"Blood (Citrate)",
+    params:[
+      {id:"pt",   name:"Prothrombin Time (PT)",unit:"seconds",normal:"11 – 13.5"},
+      {id:"inr",  name:"INR",unit:"",normal:"0.8 – 1.2"},
+      {id:"aptt", name:"APTT",unit:"seconds",normal:"25 – 35"},
+    ]
+  },
+  "S. Amylase": {
+    label:"Serum Amylase",
+    sample:"Blood (Serum)",
+    params:[{id:"samylase",name:"Serum Amylase",unit:"U/L",normal:"30 – 110"}]
+  },
+  "S. Lipase": {
+    label:"Serum Lipase",
+    sample:"Blood (Serum)",
+    params:[{id:"slipase",name:"Serum Lipase",unit:"U/L",normal:"< 160"}]
+  },
+  "Anti-TPO": {
+    label:"Anti-TPO Antibody",
+    sample:"Blood (Serum)",
+    params:[{id:"antitpo",name:"Anti-TPO",unit:"IU/mL",normal:"< 35"}]
+  },
+  "Prolactin": {
+    label:"Prolactin",
+    sample:"Blood (Serum)",
+    params:[{id:"prl",name:"Prolactin",unit:"ng/mL",normalM:"2 – 18",normalF:"2 – 29"}]
+  },
+  "FSH": {
+    label:"FSH (Follicle Stimulating Hormone)",
+    sample:"Blood (Serum)",
+    params:[{id:"fsh",name:"FSH",unit:"mIU/mL",normal:"Varies by cycle phase"}]
+  },
+  "LH": {
+    label:"LH (Luteinizing Hormone)",
+    sample:"Blood (Serum)",
+    params:[{id:"lh",name:"LH",unit:"mIU/mL",normal:"Varies by cycle phase"}]
+  },
+  "Cortisol": {
+    label:"Serum Cortisol",
+    sample:"Blood (Serum)",
+    params:[{id:"cortisol",name:"Serum Cortisol",unit:"µg/dL",normal:"Morning: 6–23  Evening: 2–11"}]
+  },
+};
+
+const WIDAL_OPTIONS = ["1:20","1:40","1:80","1:160","1:320","1:640","Negative"];
+let selectedTests = [];
+let savedReports = JSON.parse(localStorage.getItem('labReports') || '[]');
+let currentReport = null;
+
+// ══════════ AUTH ══════════
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value.trim();
+  if(u==='nishat' && p==='Nishat@345'){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('appScreen').style.display='block';
+    document.getElementById('loggedUser').textContent='👤 '+u;
+    setCollectionDate();
+  } else {
+    document.getElementById('loginErr').style.display='block';
+  }
+}
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+function doLogout(){
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+
+// ══════════ DATE/TIME ══════════
+function setCollectionDate(){
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const str=`${pad(now.getDate())}-${pad(now.getMonth()+1)}-${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${now.getHours()>=12?'PM':'AM'}`;
+  document.getElementById('collectionDate').value=str;
+}
+function getDeliveryDate(){
+  const d=new Date(); d.setDate(d.getDate()+1);
+  return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+}
+
+// ══════════ TABS ══════════
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('newReport').style.display=t==='newReport'?'block':'none';
+  document.getElementById('savedReports').style.display=t==='savedReports'?'block':'none';
+  if(t==='savedReports')renderSaved();
+}
+
+// ══════════ TEST SELECTOR ══════════
+function filterTests(){
+  const q=document.getElementById('testSearch').value.toLowerCase();
+  const dd=document.getElementById('testDropdown');
+  dd.innerHTML='';
+  Object.keys(ALL_TESTS).filter(k=>!selectedTests.includes(k)&&(k.toLowerCase().includes(q)||ALL_TESTS[k].label.toLowerCase().includes(q)))
+    .forEach(k=>{
+      const d=document.createElement('div');
+      d.textContent=ALL_TESTS[k].label;
+      d.onclick=()=>addTest(k);
+      dd.appendChild(d);
+    });
+  dd.style.display=dd.children.length?'block':'none';
+}
+function showDropdown(){
+  document.getElementById('testSearch').value='';
+  filterTests();
+  document.getElementById('testDropdown').style.display='block';
+}
+function hideDropdown(){document.getElementById('testDropdown').style.display='none'}
+
+function addTest(key){
+  if(selectedTests.includes(key))return;
+  selectedTests.push(key);
+  document.getElementById('testSearch').value='';
+  renderTestTags();
+  renderParams();
+  hideDropdown();
+}
+function removeTest(key){
+  selectedTests=selectedTests.filter(k=>k!==key);
+  renderTestTags();
+  renderParams();
+}
+function renderTestTags(){
+  const c=document.getElementById('selectedTests');
+  c.innerHTML=selectedTests.map(k=>`
+    <span class="testTag">${ALL_TESTS[k].label}
+      <button onclick="removeTest('${k}')" title="Remove">✕</button>
+    </span>`).join('');
+}
+
+// ══════════ PARAMETER INPUTS ══════════
+function renderParams(){
+  const sec=document.getElementById('paramSection');
+  if(!selectedTests.length){sec.innerHTML='';return;}
+  let html='<div class="sectionTitle">📝 Enter Test Results</div>';
+  selectedTests.forEach(key=>{
+    const t=ALL_TESTS[key];
+    html+=`<div style="margin-bottom:18px">
+      <div style="font-weight:700;color:#1a237e;font-size:.95rem;margin-bottom:6px;background:#e8eaf6;padding:8px 12px;border-radius:6px">
+        🔬 ${t.label} &nbsp;<span style="font-weight:400;font-size:.8rem;color:#555">Sample: ${t.sample}</span>
+      </div>
+      <table class="paramTable"><thead>
+        <tr><th>Parameter</th><th>Result</th><th>Unit</th><th>Normal Range</th></tr>
+      </thead><tbody>`;
+    t.params.forEach(p=>{
+      const normal=p.normalM?`M: ${p.normalM} | F: ${p.normalF}`:p.normal||'';
+      let input='';
+      if(p.type==='qualitative'){
+        input=`<select id="val_${p.id}"><option value="">-- Select --</option>${(p.options||[]).map(o=>`<option>${o}</option>`).join('')}</select>`;
+      } else if(p.type==='widal'){
+        input=`<select id="val_${p.id}"><option value="">-- Select --</option>${WIDAL_OPTIONS.map(o=>`<option>${o}</option>`).join('')}</select>`;
+      } else {
+        input=`<input type="text" id="val_${p.id}" placeholder="Enter value">`;
+      }
+      html+=`<tr>
+        <td class="paramName">${p.name}</td>
+        <td>${input}</td>
+        <td class="unit">${p.unit||''}</td>
+        <td class="normalRange">${normal}</td>
+      </tr>`;
+    });
+    html+='</tbody></table></div>';
+  });
+  sec.innerHTML=html;
+}
+
+// ══════════ COLLECT DATA ══════════
+function collectFormData(){
+  const ageY=document.getElementById('ageY').value;
+  const ageM=document.getElementById('ageM').value;
+  const ageD=document.getElementById('ageD').value;
+  let ageStr=ageY?ageY+'Y':'';
+  if(ageM)ageStr+=' '+ageM+'M';
+  if(ageD)ageStr+=' '+ageD+'D';
+
+  const data={
+    patientId:document.getElementById('patientId').value.trim(),
+    billId:document.getElementById('billId').value.trim(),
+    patientName:document.getElementById('patientName').value.trim(),
+    age:ageStr.trim(),
+    sex:document.getElementById('sex').value,
+    patientFrom:document.getElementById('patientFrom').value,
+    referredBy:document.getElementById('referredBy').value.trim(),
+    nid:document.getElementById('nid').value.trim(),
+    contactNo:document.getElementById('contactNo').value.trim(),
+    collectionDate:document.getElementById('collectionDate').value,
+    deliveryDate:getDeliveryDate(),
+    sampleId:'SMP-'+Date.now(),
+    labId:'LAB-'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'-'+Math.floor(Math.random()*999),
+    tests:{},
+    savedAt:new Date().toISOString()
+  };
+
+  selectedTests.forEach(key=>{
+    const t=ALL_TESTS[key];
+    data.tests[key]={label:t.label,sample:t.sample,params:[]};
+    t.params.forEach(p=>{
+      const el=document.getElementById('val_'+p.id);
+      data.tests[key].params.push({
+        id:p.id,name:p.name,unit:p.unit||'',
+        value:el?el.value:'',
+        normal:p.normalM?`M: ${p.normalM} | F: ${p.normalF}`:p.normal||''
+      });
+    });
+  });
+  return data;
+}
+
+function validateForm(){
+  let ok=true;
+  ['patientId','billId','patientName','ageY','sex'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el.value.trim()){el.classList.add('required-field');ok=false;}
+    else el.classList.remove('required-field');
+  });
+  if(!selectedTests.length){alert('Please select at least one test.');ok=false;}
+  return ok;
+}
+
+// ══════════ SAVE ══════════
+async function saveReport(){
+  if(!validateForm())return;
+  const data=collectFormData();
+  savedReports.unshift(data);
+  localStorage.setItem('labReports',JSON.stringify(savedReports));
+
+  const url=document.getElementById('sheetUrl').value.trim();
+  const msg=document.getElementById('statusMsg');
+  if(url){
+    try{
+      const flat={
+        patientId:data.patientId,billId:data.billId,patientName:data.patientName,
+        age:data.age,sex:data.sex,patientFrom:data.patientFrom,
+        referredBy:data.referredBy,nid:data.nid,contactNo:data.contactNo,
+        collectionDate:data.collectionDate,deliveryDate:data.deliveryDate,
+        sampleId:data.sampleId,labId:data.labId,
+        tests:JSON.stringify(data.tests),savedAt:data.savedAt
+      };
+      await fetch(url,{method:'POST',mode:'no-cors',body:JSON.stringify(flat)});
+      msg.className='statusMsg success';
+      msg.textContent='✅ Report saved locally & sent to Google Sheets!';
+    }catch(e){
+      msg.className='statusMsg error';
+      msg.textContent='⚠️ Saved locally. Google Sheets sync failed: '+e.message;
+    }
+  } else {
+    msg.className='statusMsg success';
+    msg.textContent='✅ Report saved locally! (No Sheets URL provided)';
+  }
+  setTimeout(()=>msg.style.display='none',4000);
+}
+
+// ══════════ CLEAR ══════════
+function clearForm(){
+  ['patientId','billId','patientName','ageY','ageM','ageD','nid','contactNo','referredBy'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sex').value='';
+  document.getElementById('patientFrom').value='OPD';
+  selectedTests=[];
+  renderTestTags();
+  renderParams();
+  setCollectionDate();
+}
+
+// ══════════ SAVED REPORTS ══════════
+function renderSaved(){
+  const q=document.getElementById('searchSaved').value.toLowerCase();
+  const tb=document.getElementById('savedTableBody');
+  const filtered=savedReports.filter(r=>
+    (r.patientName||'').toLowerCase().includes(q)||
+    (r.patientId||'').toLowerCase().includes(q)||
+    (r.billId||'').toLowerCase().includes(q));
+  tb.innerHTML=filtered.length?filtered.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${r.patientId}</td>
+      <td>${r.billId}</td>
+      <td><strong>${r.patientName}</strong></td>
+      <td>${r.age} / ${r.sex}</td>
+      <td>${Object.values(r.tests||{}).map(t=>t.label).join(', ')}</td>
+      <td>${r.collectionDate}</td>
+      <td>
+        <button class="btn btn-primary" style="padding:4px 10px;font-size:.78rem" onclick="reprints(${savedReports.indexOf(r)})">🖨️ Reprint</button>
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:.78rem;margin-left:4px" onclick="deleteReport(${savedReports.indexOf(r)})">🗑️</button>
+      </td>
+    </tr>`).join('')
+    :'<tr><td colspan="8" style="text-align:center;color:#999;padding:20px">No reports found</td></tr>';
+}
+function deleteReport(i){
+  if(confirm('Delete this report?')){savedReports.splice(i,1);localStorage.setItem('labReports',JSON.stringify(savedReports));renderSaved();}
+}
+function reprints(i){buildPrint(savedReports[i]);}
+
+// ══════════ PREVIEW ══════════
+function previewReport(){
+  if(!validateForm())return;
+  const data=collectFormData();
+  buildPrint(data);
+}
+
+// ══════════ BUILD PRINT ══════════
+function buildPrint(data){
+  currentReport=data;
+  const sex=data.sex;
+
+  // Barcode SVGs
+  const bc1=`<svg id="bc1"></svg>`;
+  const bc2=`<svg id="bc2"></svg>`;
+
+  // Patient info rows
+  const piRows=[
+    ['Patient ID',data.patientId],['Bill ID',data.billId],
+    ['Patient Name',data.patientName],['NID',data.nid||'—'],
+    ['Age',data.age],['Contact No',data.contactNo||'—'],
+    ['Sex',data.sex],['Patient From',data.patientFrom],
+    ['Referred By',data.referredBy||'—'],['Lab ID',data.labId],
+    ['Collection Date',data.collectionDate],['Delivery Date',data.deliveryDate],
+    ['Sample ID',data.sampleId],['',''],
+  ];
+
+  let piHtml='<div class="patientGrid">';
+  for(let i=0;i<piRows.length;i+=2){
+    piHtml+=`<div class="col">
+      <div class="pi"><div class="lbl">${piRows[i][0]}</div><div class="val">${piRows[i][1]}</div></div>
+    </div>
+    <div class="col">
+      ${piRows[i+1]&&piRows[i+1][0]?`<div class="pi"><div class="lbl">${piRows[i+1][0]}</div><div class="val">${piRows[i+1][1]}</div></div>`:'<div class="pi" style="visibility:hidden"><div class="lbl">-</div><div class="val">-</div></div>'}
+    </div>`;
+  }
+  piHtml+='</div>';
+
+  // Test Name row
+  const testNames=Object.values(data.tests).map(t=>t.label).join(' | ');
+  const samples=[...new Set(Object.values(data.tests).map(t=>t.sample))].join(', ');
+
+  // Results table
+  let rptRows='';
+  Object.values(data.tests).forEach(t=>{
+    rptRows+=`<tr><td colspan="4" class="testGroup">▸ ${t.label} &nbsp;&nbsp; <span style="font-weight:400;font-size:8pt">Sample: ${t.sample}</span></td></tr>`;
+    t.params.forEach(p=>{
+      const isAbnormal=checkAbnormal(p.value,p.normal,sex);
+      rptRows+=`<tr>
+        <td style="padding-left:16px">${p.name}</td>
+        <td class="${isAbnormal?'abnormal':''}" style="${isAbnormal?'font-weight:700':''}">
+          ${p.value||'—'} ${isAbnormal?'*':''}
+        </td>
+        <td class="unitVal">${p.unit}</td>
+        <td class="normalVal">${p.normal}</td>
+      </tr>`;
+    });
+  });
+
+  // Seal SVG (Bangladesh Govt seal-like)
+  const sealSVG=`<div class="rptSeal">
+    <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="30" r="28" fill="none" stroke="#000" stroke-width="1.5"/>
+      <circle cx="30" cy="30" r="22" fill="none" stroke="#000" stroke-width="0.8"/>
+      <text x="30" y="18" text-anchor="middle" font-size="5" font-weight="bold">গণপ্রজাতন্ত্রী</text>
+      <text x="30" y="24" text-anchor="middle" font-size="5" font-weight="bold">বাংলাদেশ</text>
+      <text x="30" y="30" text-anchor="middle" font-size="4">সরকার</text>
+      <ellipse cx="30" cy="38" rx="8" ry="6" fill="none" stroke="#000" stroke-width="0.8"/>
+      <text x="30" y="50" text-anchor="middle" font-size="3.5">স্বাস্থ্য সেবা বিভাগ</text>
+    </svg>
+  </div>`;
+
+  document.getElementById('rptContent').innerHTML=`
+    <!-- HEADER -->
+    <div class="rptHeader">
+      ${sealSVG}
+      <div class="rptHospName">
+        <h1>250 Bedded General Hospital, Nilphamari.</h1>
+        <p>Upazila: Nilphamari Sadar, District: Nilphamari, Division: Rangpur</p>
+        <p>Email: nilphamari@hospi.dghs.gov.bd</p>
+      </div>
+      ${sealSVG}
+    </div>
+
+    <!-- BARCODES -->
+    <div class="barcodeRow">
+      <svg id="bc1" style="height:40px;max-width:180px"></svg>
+      <svg id="bc2" style="height:40px;max-width:180px"></svg>
+    </div>
+
+    <!-- TITLE -->
+    <div class="rptTitle">CLINICAL PATHOLOGY REPORT</div>
+
+    <!-- TEST NAMES -->
+    <div style="font-size:9pt;margin-bottom:6px;padding:4px 8px;background:#f5f5f5;border:1px solid #ddd">
+      <strong>Test Name:</strong> ${testNames} &nbsp;&nbsp; <strong>Sample:</strong> ${samples}
+    </div>
+
+    <!-- PATIENT INFO -->
+    ${piHtml}
+
+    <!-- RESULTS TABLE -->
+    <table class="rptTable">
+      <thead>
+        <tr>
+          <th style="width:35%">TEST</th>
+          <th style="width:20%">RESULT</th>
+          <th style="width:15%">UNIT</th>
+          <th style="width:30%">NORMAL RANGE</th>
+        </tr>
+      </thead>
+      <tbody>${rptRows}</tbody>
+    </table>
+
+    <!-- FOOTER -->
+    <div class="rptFooter">
+      <div style="font-size:8pt;color:#555">* Abnormal values are marked in bold</div>
+      <div class="sigRow">
+        <div class="sigBox">
+          <div class="sigLine"></div>
+          <p class="sigName">Mr. Nishat Raihan</p>
+          <p>Medical Technologist (LAB)</p>
+          <p>Nilphamari 250 bed District Hospital</p>
+        </div>
+        <div class="sigBox">
+          <div style="margin-top:32px;min-height:32px"></div>
+          <div class="sigLine"></div>
+          <p class="sigName">[Seal of Doctor]</p>
+          <p>Pathologist</p>
+          <p>250 Bedded General Hospital, Nilphamari</p>
+        </div>
+      </div>
+      <div class="printedBy">Printed By: nishat &nbsp; | &nbsp; ${data.collectionDate}</div>
+    </div>
+  `;
+
+  document.getElementById('printModal').classList.add('open');
+
+  // Generate barcodes after render
+  setTimeout(()=>{
+    try{
+      JsBarcode('#bc1',data.patientId||'PATIENT',{format:'CODE128',height:35,fontSize:10,margin:2,displayValue:true});
+      JsBarcode('#bc2',data.sampleId,{format:'CODE128',height:35,fontSize:10,margin:2,displayValue:true});
+    }catch(e){console.warn('Barcode error',e);}
+  },100);
+}
+
+// ══════════ ABNORMAL CHECK ══════════
+function checkAbnormal(val,normalStr,sex){
+  if(!val||!normalStr)return false;
+  const v=parseFloat(val);
+  if(isNaN(v))return false;
+
+  // Pick sex-specific if present
+  let ns=normalStr;
+  if(normalStr.includes('M:')&&normalStr.includes('F:')){
+    const mMatch=normalStr.match(/M:\s*([\d.]+)\s*[–\-]\s*([\d.]+)/);
+    const fMatch=normalStr.match(/F:\s*([\d.]+)\s*[–\-]\s*([\d.]+)/);
+    const match=sex==='Female'?fMatch:mMatch;
+    if(match)ns=`${match[1]} – ${match[2]}`;
+  }
+
+  const range=ns.match(/([\d.]+)\s*[–\-]\s*([\d.]+)/);
+  if(range){const lo=parseFloat(range[1]),hi=parseFloat(range[2]);return v<lo||v>hi;}
+  const lt=ns.match(/[<＜]\s*([\d.]+)/);if(lt)return v>=parseFloat(lt[1]);
+  const gt=ns.match(/[>＞]\s*([\d.]+)/);if(gt)return v<=parseFloat(gt[1]);
+  return false;
+}
+
+function closePrint(){document.getElementById('printModal').classList.remove('open');}
+</script>
+</body>
+</html>
