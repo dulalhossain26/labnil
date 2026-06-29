@@ -115,9 +115,16 @@ input,select,button{font-family:inherit}
 .rTbl th{background:#1a237e;color:#fff;padding:9px 11px;font-size:.8rem;text-align:left}
 .rTbl td{padding:8px 11px;border-bottom:1px solid #e8eaf6;font-size:.83rem}
 .rTbl tr:hover td{background:#f5f7ff}
-.sBar{display:flex;gap:8px;margin-bottom:14px}
-.sBar input{flex:1;padding:8px 13px;border:1.5px solid #d0d7e2;border-radius:7px;font-size:.88rem}
+.sBar{display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.sBar input{flex:1;min-width:180px;padding:8px 13px;border:1.5px solid #d0d7e2;border-radius:7px;font-size:.88rem}
 .sBar button{padding:8px 16px;border-radius:7px;border:none;background:#1a237e;color:#fff;cursor:pointer;font-weight:600}
+.syncBtn{background:linear-gradient(90deg,#00695c,#00897b)!important;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.syncBtn:disabled{opacity:.6;cursor:not-allowed}
+.spin{display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.syncInfo{font-size:.78rem;color:#555;margin-left:2px}
+/* Fix action buttons inline */
+.actBtns{display:flex;gap:4px;align-items:center;flex-wrap:nowrap}
 
 /* ═══════════════════════════
    PRINT MODAL
@@ -159,26 +166,23 @@ input,select,button{font-family:inherit}
 .a5title{text-align:center;font-size:11pt;font-weight:700;letter-spacing:1.5px;
   border-top:1.5px solid #000;border-bottom:1.5px solid #000;padding:3px 0;margin-bottom:5px}
 
-/* Patient info two-column */
-.a5pi{display:flex;gap:0;margin-bottom:5px;font-size:7.5pt;border-bottom:1px solid #999;padding-bottom:4px}
-.a5picol{flex:1}
-.a5picol div{margin-bottom:1.5px;line-height:1.4}
-.a5picol div span.lbl{font-weight:700}
-.a5picol div span.val{margin-left:2px}
+/* ── FIX 1: Patient info TABLE ── */
+.a5pi{margin-bottom:5px;border-bottom:1px solid #999;padding-bottom:4px}
+.a5pitbl{width:100%;border-collapse:collapse;font-size:7.5pt}
+.a5pitbl td{padding:2px 5px;border:1px solid #ccc;vertical-align:top;line-height:1.5}
+.a5pitbl td.lbl{font-weight:700;background:#f0f0f0;white-space:nowrap;width:22%}
+.a5pitbl td.val{width:28%}
 
-/* Test name bar */
-.a5tnbar{font-size:7.5pt;margin-bottom:4px;padding:2px 4px;background:#f0f0f0;border:1px solid #ccc}
-
-/* Result table */
+/* ── FIX 3: Result table — black bold clear ── */
 .a5tbl{width:100%;border-collapse:collapse;margin-bottom:auto}
 .a5tbl th{background:#000;color:#fff;padding:4px 6px;font-size:7.5pt;text-align:left;border:1px solid #000}
-.a5tbl td{padding:2.5px 6px;font-size:7.5pt;border:1px solid #ccc;vertical-align:middle}
-.a5tbl .tgrp{background:#ddd;font-weight:700;font-size:7.5pt;padding:4px 6px;border:1px solid #999}
+.a5tbl td{padding:2.5px 6px;font-size:7.5pt;border:1px solid #ccc;vertical-align:middle;color:#000;font-weight:600}
+.a5tbl .tgrp{background:#ddd;font-weight:700;font-size:7.5pt;padding:4px 6px;border:1px solid #999;color:#000}
 .a5tbl .sgrp{background:#eeeeee;font-weight:700;font-size:7pt;padding:3px 6px;
   border:1px solid #bbb;font-style:italic;color:#333}
-.a5tbl .abnormal{font-weight:700}
-.a5tbl .nv{font-size:7pt;color:#333}
-.a5tbl .uv{font-size:7pt}
+.a5tbl .abnormal{font-weight:900;color:#000}
+.a5tbl .nv{font-size:7pt;color:#000;font-weight:600}
+.a5tbl .uv{font-size:7pt;color:#000;font-weight:600}
 
 /* Footer */
 .a5ftr{margin-top:auto;padding-top:5px;border-top:1px solid #000}
@@ -313,7 +317,7 @@ input,select,button{font-family:inherit}
       <div class="selTests" id="selTests"></div>
       <div id="paramSec"></div>
 
-      <input type="hidden" id="sheetUrl" value="https://script.google.com/macros/s/AKfycbzkHLkmfP3pkLSAtzvCH6ghLU0Ke-5r5FpqWih12QeDKKMkfvZ7uzo7BJeSMaSTGwjSHQ/exec">
+      <input type="hidden" id="sheetUrl" value="https://script.google.com/macros/s/AKfycbz1i8nNtYm8i6Va_9XJ9QfySb152B70xjXdRkOBbqosuZBUyrPurbm7Uf7nxpr81paGZQ/exec">
       <input type="hidden" id="editIdx" value="-1">
       <input type="hidden" id="editRow" value="">
 
@@ -333,11 +337,20 @@ input,select,button{font-family:inherit}
 
     <!-- SAVED REPORTS -->
     <div id="savedReports" class="card" style="display:none">
-      <div class="sT">📁 Saved Reports</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div class="sT" style="margin:0;border:none;padding:0">📁 Saved Reports</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="syncInfo" class="syncInfo"></span>
+          <button id="syncBtn" class="btn syncBtn" onclick="syncFromSheet()">
+            <span id="syncIcon">☁️</span> Sync from Sheet
+          </button>
+        </div>
+      </div>
       <div class="sBar">
         <input type="text" id="searchSaved" placeholder="Search by Name, Patient ID or Bill ID..." oninput="renderSaved()">
         <button onclick="renderSaved()">🔍</button>
       </div>
+      <div id="syncStatus" style="display:none;padding:8px 12px;border-radius:7px;margin-bottom:10px;font-size:.83rem"></div>
       <div style="overflow-x:auto">
         <table class="rTbl">
           <thead><tr>
@@ -361,9 +374,6 @@ input,select,button{font-family:inherit}
 </div>
 
 <script>
-// ════════════════════════════════════════
-// TEST CATEGORIES & REPORT TITLES
-// ════════════════════════════════════════
 const CAT={
   HAEMATOLOGY:["CBC","Blood Group","MP","Filaria","PT/INR","S. Iron","Ferritin"],
   BIOCHEMISTRY:["RBS","FBS","PPBS","HbA1c","S. Creatinine","S. Urea","Uric Acid",
@@ -386,9 +396,6 @@ function getTestCat(key){
   return "PATHOLOGY";
 }
 
-// ════════════════════════════════════════
-// TEST DATABASE
-// ════════════════════════════════════════
 const ALL_TESTS={
   "CBC":{label:"Complete Blood Count (CBC)",sample:"Blood (EDTA)",params:[
     {id:"hb",   name:"Haemoglobin (Hb)",    unit:"g/dL",   normalM:"13.5–17.5",normalF:"11.5–15.5",def:""},
@@ -507,8 +514,6 @@ const ALL_TESTS={
   "Pregnancy Test":{label:"Pregnancy Test (Urine hCG)",sample:"Urine",params:[
     {id:"preg",name:"Urine hCG",unit:"",normal:"Negative",type:"q",def:"Negative",
      options:["Negative","Positive"]}]},
-
-  // ─── URINE R/M/E with exact sections from hospital report ───
   "Urine R/M/E":{label:"Urine R/M/E",sample:"Urine",
     sections:[
       {sec:"Physical Examination",params:[
@@ -548,7 +553,6 @@ const ALL_TESTS={
       ]},
     ]
   },
-
   "Stool R/M/E":{label:"Stool R/M/E",sample:"Stool",params:[
     {id:"stcolor",name:"Colour",     unit:"",normal:"Brown",  type:"q",def:"Brown",
      options:["Brown","Yellow","Green","Black","Red","Clay coloured"]},
@@ -562,7 +566,6 @@ const ALL_TESTS={
      options:["Not Found","Ascaris lumbricoides","Hookworm ova","Giardia cyst","Entamoeba histolytica","Others"]},
     {id:"stbact", name:"Bacteria",   unit:"",normal:"Normal flora",type:"q",def:"Normal flora",
      options:["Normal flora","No significant growth","Others"]}]},
-
   "Dope Test":{label:"Dope Test (Urine Drug Screen)",sample:"Urine",params:[
     {id:"dalc",  name:"Alcohol",         unit:"",normal:"Negative",type:"q",def:"Negative",options:["Negative","Positive"]},
     {id:"damp",  name:"Amphetamin",      unit:"",normal:"Negative",type:"q",def:"Negative",options:["Negative","Positive"]},
@@ -571,13 +574,11 @@ const ALL_TESTS={
     {id:"dopi",  name:"Opiates",         unit:"",normal:"Negative",type:"q",def:"Negative",options:["Negative","Positive"]},
     {id:"dcoc",  name:"Cocaine",         unit:"",normal:"Negative",type:"q",def:"Negative",options:["Negative","Positive"]},
     {id:"dmeth", name:"Methamphetamine", unit:"",normal:"Negative",type:"q",def:"Negative",options:["Negative","Positive"]}]},
-
   "Sputum AFB":{label:"Sputum AFB",sample:"Sputum",params:[
     {id:"afb1",name:"Sample 1",unit:"",normal:"No AFB seen",type:"q",def:"No AFB seen",
      options:["No AFB seen","AFB seen (+)","AFB seen (++)","AFB seen (+++)"]},
     {id:"afb2",name:"Sample 2",unit:"",normal:"No AFB seen",type:"q",def:"No AFB seen",
      options:["No AFB seen","AFB seen (+)","AFB seen (++)","AFB seen (+++)"]},]},
-
   "S. Calcium":{label:"Serum Calcium",sample:"Blood (Serum)",params:[
     {id:"scal",name:"Serum Calcium",unit:"mg/dL",normal:"8.5–10.5",def:""}]},
   "S. Phosphorus":{label:"Serum Phosphorus",sample:"Blood (Serum)",params:[
@@ -633,7 +634,6 @@ const LOGO_URL="https://raw.githubusercontent.com/dulalhossain26/labnil/main/log
 let selTests=[],savedReports=JSON.parse(localStorage.getItem('labRep3')||'[]');
 let currentUser='',isEdit=false;
 
-// ════ AUTH ════
 function doLogin(){
   const u=document.getElementById('loginUser').value;
   const p=document.getElementById('loginPass').value.trim();
@@ -657,7 +657,6 @@ function doLogout(){
   currentUser='';clearForm();
 }
 
-// ════ DATE ════
 function setCollDate(){
   const n=new Date(),p=x=>String(x).padStart(2,'0');
   const h=n.getHours();
@@ -673,16 +672,14 @@ function syncPid(){
   document.getElementById('patientId').value='BDH'+num;
 }
 
-// ════ TABS ════
 function showTab(t,el){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('newReport').style.display=t==='newReport'?'block':'none';
   document.getElementById('savedReports').style.display=t==='savedReports'?'block':'none';
-  if(t==='savedReports')renderSaved();
+  if(t==='savedReports'){renderSaved();syncFromSheet();}
 }
 
-// ════ TEST SELECTOR ════
 function filterTests(){
   const q=document.getElementById('testSearch').value.toLowerCase();
   const dd=document.getElementById('tsDrop');dd.innerHTML='';
@@ -710,7 +707,6 @@ function renderTags(){
     </span>`).join('');
 }
 
-// ════ RENDER PARAMS ════
 function getAllParams(key){
   const t=ALL_TESTS[key];
   if(t.sections){
@@ -737,13 +733,10 @@ function renderParams(){
         <tr><th style="width:35%">Parameter</th><th style="width:20%">Result</th>
         <th style="width:13%">Unit</th><th>Normal Range</th></tr>
       </thead><tbody>`;
-
     if(t.sections){
       t.sections.forEach(s=>{
         html+=`<tr class="secHdr"><td colspan="4">▸ ${s.sec}</td></tr>`;
-        s.params.forEach(p=>{
-          html+=buildParamRow(p);
-        });
+        s.params.forEach(p=>{html+=buildParamRow(p);});
       });
     } else {
       t.params.forEach(p=>{html+=buildParamRow(p);});
@@ -773,14 +766,12 @@ function buildParamRow(p){
   </tr>`;
 }
 
-// ════ COLLECT DATA ════
 function collectData(){
   const ageY=document.getElementById('ageY').value;
   const ageM=document.getElementById('ageM').value;
   const ageD=document.getElementById('ageD').value;
   let age=ageY?ageY+'Y':'';
   if(ageM)age+=' '+ageM+'M';if(ageD)age+=' '+ageD+'D';
-
   const data={
     patientId:document.getElementById('patientId').value||'BDH'+document.getElementById('patientIdNum').value,
     billId:document.getElementById('billId').value.trim(),
@@ -797,7 +788,6 @@ function collectData(){
     technologist:currentUser,
     tests:{},savedAt:new Date().toISOString()
   };
-
   selTests.forEach(key=>{
     const t=ALL_TESTS[key];
     const allP=getAllParams(key);
@@ -805,7 +795,6 @@ function collectData(){
     allP.forEach(p=>{
       const el=document.getElementById('val_'+p.id);
       let val=el?el.value:'';
-      // use default if empty
       if(!val&&p.def)val=p.def;
       const nr=p.normalM?`M:${p.normalM} F:${p.normalF}`:p.normal||'';
       data.tests[key].params.push({
@@ -832,7 +821,6 @@ function validate(){
   return ok;
 }
 
-// ════ SAVE & PRINT ════
 async function saveAndPrint(){
   if(!validate())return;
   const data=collectData();
@@ -840,9 +828,7 @@ async function saveAndPrint(){
   const editR=document.getElementById('editRow').value;
   const url=document.getElementById('sheetUrl').value.trim();
   const editing=isEdit&&editI>=0;
-
   showStat('⏳ Saving...','inf');
-
   if(editing){
     data.sampleId=savedReports[editI].sampleId;
     data.labId=savedReports[editI].labId;
@@ -854,8 +840,6 @@ async function saveAndPrint(){
     savedReports.unshift(data);
   }
   localStorage.setItem('labRep3',JSON.stringify(savedReports));
-
-  // Send to sheets
   if(url){
     try{
       const payload={
@@ -870,8 +854,6 @@ async function saveAndPrint(){
       fetch(url,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
     }catch(e){}
   }
-
-  // Build print then auto-trigger
   buildPrint(data,true);
   if(editing)cancelEdit();
 }
@@ -880,7 +862,6 @@ function showStat(m,t){
   const e=document.getElementById('sMsg');e.className='sMsg '+t;e.textContent=m;
 }
 
-// ════ EDIT ════
 function editReport(idx){
   const r=savedReports[idx];
   document.getElementById('tab1').click();
@@ -889,8 +870,6 @@ function editReport(idx){
   document.getElementById('editRow').value=r.rowNum||'';
   document.getElementById('editBanner').style.display='flex';
   document.getElementById('saveBtn').textContent='💾 Update & Print';
-
-  // Fill patient
   const pidFull=r.patientId||'';
   const pidNum=pidFull.startsWith('BDH')?pidFull.slice(3):pidFull;
   document.getElementById('patientIdNum').value=pidNum;
@@ -908,7 +887,6 @@ function editReport(idx){
   document.getElementById('nid').value=r.nid||'';
   document.getElementById('contactNo').value=r.contactNo||'';
   document.getElementById('collectionDate').value=r.collectionDate||'';
-
   selTests=Object.keys(r.tests||{});
   renderTags();renderParams();
   setTimeout(()=>{
@@ -929,7 +907,6 @@ function cancelEdit(){
   document.getElementById('saveBtn').textContent='💾 Save & Print';
 }
 
-// ════ CLEAR ════
 function clearForm(){
   ['billId','patientName','ageY','ageM','ageD','nid','contactNo','referredBy'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('patientIdNum').value='';
@@ -940,7 +917,6 @@ function clearForm(){
   document.getElementById('sMsg').style.display='none';
 }
 
-// ════ SAVED REPORTS ════
 function renderSaved(){
   const q=(document.getElementById('searchSaved').value||'').toLowerCase();
   const tb=document.getElementById('rTblBody');
@@ -957,11 +933,11 @@ function renderSaved(){
       <td style="font-size:.75rem">${Object.values(r.tests||{}).map(t=>t.label).join(', ')}</td>
       <td style="font-size:.78rem">${r.technologist||'—'}</td>
       <td style="font-size:.75rem">${(r.collectionDate||'').slice(0,16)}</td>
-      <td style="white-space:nowrap">
+      <td><div class="actBtns">
         <button class="btn btn-blue" style="padding:3px 9px;font-size:.73rem" onclick="reprintR(${ri})">🖨️</button>
-        <button class="btn btn-orange" style="padding:3px 9px;font-size:.73rem;margin-left:3px" onclick="editReport(${ri})">✏️</button>
-        <button class="btn btn-red" style="padding:3px 9px;font-size:.73rem;margin-left:3px" onclick="delReport(${ri})">🗑️</button>
-      </td>
+        <button class="btn btn-orange" style="padding:3px 9px;font-size:.73rem" onclick="editReport(${ri})">✏️</button>
+        <button class="btn btn-red" style="padding:3px 9px;font-size:.73rem" onclick="delReport(${ri})">🗑️</button>
+      </div></td>
     </tr>`;
   }).join('')
   :'<tr><td colspan="9" style="text-align:center;color:#999;padding:20px">No reports found</td></tr>';
@@ -971,28 +947,21 @@ function delReport(i){
 }
 function reprintR(i){buildPrint(savedReports[i],false);}
 
-// ════ BUILD PRINT PAGES ════
 function buildPrint(data,autoPrint){
-  // Group tests by category
   const groups={};
   Object.keys(data.tests).forEach(key=>{
     const cat=getTestCat(key);
     if(!groups[cat])groups[cat]=[];
     groups[cat].push(key);
   });
-
   const wrap=document.getElementById('pagesWrap');
   wrap.innerHTML='';
-
   Object.keys(groups).forEach(cat=>{
     const testKeys=groups[cat];
     const pages=buildCatPages(data,cat,testKeys);
     pages.forEach(pg=>wrap.appendChild(pg));
   });
-
   document.getElementById('printModal').style.display='block';
-
-  // Generate barcodes
   setTimeout(()=>{
     document.querySelectorAll('.bcsvg').forEach(svg=>{
       const val=svg.getAttribute('data-val');
@@ -1001,9 +970,7 @@ function buildPrint(data,autoPrint){
         catch(e){}
       }
     });
-    if(autoPrint){
-      setTimeout(()=>{window.print();},600);
-    }
+    if(autoPrint){setTimeout(()=>{window.print();},600);}
   },200);
 }
 
@@ -1015,7 +982,6 @@ function buildCatPages(data,cat,testKeys){
   const now=new Date();
   const printTime=`${String(now.getDate()).padStart(2,'0')}-${String(now.getMonth()+1).padStart(2,'0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} ${now.getHours()>=12?'PM':'AM'}`;
 
-  // Build all result rows for this category
   let allRows=[];
   testKeys.forEach(key=>{
     const t=data.tests[key];
@@ -1031,12 +997,9 @@ function buildCatPages(data,cat,testKeys){
     });
   });
 
-  // Split into pages (max ~30 rows per A5 page)
   const ROWS_PER_PAGE=28;
   const chunks=[];
-  for(let i=0;i<allRows.length;i+=ROWS_PER_PAGE){
-    chunks.push(allRows.slice(i,i+ROWS_PER_PAGE));
-  }
+  for(let i=0;i<allRows.length;i+=ROWS_PER_PAGE){chunks.push(allRows.slice(i,i+ROWS_PER_PAGE));}
   if(!chunks.length)chunks.push([]);
 
   const testNames=testKeys.map(k=>data.tests[k].label).join(', ');
@@ -1045,7 +1008,6 @@ function buildCatPages(data,cat,testKeys){
   chunks.forEach((chunk,ci)=>{
     const div=document.createElement('div');
     div.className='a5page';
-
     const bcId1='bc_'+Math.random().toString(36).slice(2);
     const bcId2='bc_'+Math.random().toString(36).slice(2);
 
@@ -1068,8 +1030,8 @@ function buildCatPages(data,cat,testKeys){
 
     const isLastChunk=ci===chunks.length-1;
 
+    /* ── FIX 1: Patient info rendered as a bordered table ── */
     div.innerHTML=`<div class="a5inner">
-      <!-- HEADER -->
       <div class="a5hdr">
         <div class="a5logo"><img src="${LOGO_URL}" onerror="this.style.display='none'" alt="Logo"></div>
         <div class="a5hn">
@@ -1080,40 +1042,49 @@ function buildCatPages(data,cat,testKeys){
         <div class="a5logo"><img src="${LOGO_URL}" onerror="this.style.display='none'" alt="Logo"></div>
       </div>
 
-      <!-- BARCODES -->
       <div class="a5bc">
         <svg class="bcsvg" id="${bcId1}" data-val="${data.patientId}" style="height:32px;max-width:140px"></svg>
         <svg class="bcsvg" id="${bcId2}" data-val="${data.sampleId}" style="height:32px;max-width:140px"></svg>
       </div>
 
-      <!-- TITLE -->
       <div class="a5title">${title}</div>
 
-      <!-- PATIENT INFO -->
+      <!-- PATIENT INFO TABLE -->
       <div class="a5pi">
-        <div class="a5picol">
-          <div><span class="lbl">Patient Identifier :</span><span class="val">${data.patientId}</span></div>
-          <div><span class="lbl">Patient Name :</span><span class="val">${data.patientName}</span></div>
-          <div><span class="lbl">Age :</span><span class="val">${data.age}</span></div>
-          <div><span class="lbl">Mail :</span><span class="val">${data.contactNo||''}</span></div>
-          <div><span class="lbl">Patient From :</span><span class="val">${data.patientFrom}</span></div>
-          <div><span class="lbl">Test Name :</span><span class="val">${testNames}</span></div>
-          <div><span class="lbl">Sample :</span><span class="val">${samples}</span></div>
-          <div><span class="lbl">Collection Date :</span><span class="val">${data.collectionDate}</span></div>
-        </div>
-        <div class="a5picol" style="padding-left:6px">
-          <div><span class="lbl">Bill ID :</span><span class="val">${data.billId}</span></div>
-          <div><span class="lbl">Contact No :</span><span class="val">${data.contactNo||''}</span></div>
-          <div><span class="lbl">Sex :</span><span class="val">${data.sex}</span></div>
-          <div><span class="lbl">Category :</span><span class="val">${data.patientFrom}</span></div>
-          <div><span class="lbl">NID :</span><span class="val">${data.nid||''}</span></div>
-          <div><span class="lbl">Lab ID :</span><span class="val">${data.labId}</span></div>
-          <div><span class="lbl">Sample ID:</span><span class="val">${data.sampleId}</span></div>
-          <div><span class="lbl">Delivery Date :</span><span class="val">${data.deliveryDate}</span></div>
-        </div>
+        <table class="a5pitbl">
+          <tr>
+            <td class="lbl">Patient Identifier</td><td class="val">${data.patientId}</td>
+            <td class="lbl">Bill ID</td><td class="val">${data.billId}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Patient Name</td><td class="val">${data.patientName}</td>
+            <td class="lbl">Contact No</td><td class="val">${data.contactNo||''}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Age</td><td class="val">${data.age}</td>
+            <td class="lbl">Sex</td><td class="val">${data.sex}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Patient From</td><td class="val">${data.patientFrom}</td>
+            <td class="lbl">NID</td><td class="val">${data.nid||''}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Test Name</td><td class="val" colspan="3">${testNames}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Sample</td><td class="val">${samples}</td>
+            <td class="lbl">Lab ID</td><td class="val">${data.labId}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Collection Date</td><td class="val">${data.collectionDate}</td>
+            <td class="lbl">Delivery Date</td><td class="val">${data.deliveryDate}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Sample ID</td><td class="val" colspan="3">${data.sampleId}</td>
+          </tr>
+        </table>
       </div>
 
-      <!-- RESULT TABLE -->
       <table class="a5tbl">
         <thead><tr>
           <th style="width:33%">TEST</th>
@@ -1124,10 +1095,8 @@ function buildCatPages(data,cat,testKeys){
         <tbody>${tableRows}</tbody>
       </table>
 
-      <!-- FOOTER (only on last chunk of this category) -->
       ${isLastChunk?`
       <div class="a5ftr">
-        <div style="font-size:6.5pt;color:#555">* Abnormal values are marked in bold</div>
         <div class="a5sig">
           <div class="a5sigline"></div>
           <p class="sn">${tech}</p>
@@ -1143,7 +1112,6 @@ function buildCatPages(data,cat,testKeys){
   return pages;
 }
 
-// ════ ABNORMAL CHECK ════
 function checkAbn(val,normalStr,sex){
   if(!val||!normalStr)return false;
   const v=parseFloat(val);if(isNaN(v))return false;
@@ -1161,9 +1129,76 @@ function checkAbn(val,normalStr,sex){
   return false;
 }
 
+// ════ SYNC FROM GOOGLE SHEET ════
+async function syncFromSheet(){
+  const btn=document.getElementById('syncBtn');
+  const icon=document.getElementById('syncIcon');
+  const info=document.getElementById('syncInfo');
+  const statusDiv=document.getElementById('syncStatus');
+  const url=document.getElementById('sheetUrl').value.trim();
+  if(!url){showSyncStatus('No sheet URL configured.','er');return;}
+
+  btn.disabled=true;
+  icon.textContent='⏳';
+  icon.className='spin';
+  info.textContent='Syncing…';
+  statusDiv.style.display='none';
+
+  try{
+    // Use JSONP-style fetch via no-cors workaround: append ?action=getAll
+    const res=await fetch(url+'?action=getAll',{method:'GET',cache:'no-cache'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const json=await res.json();
+
+    if(!json||!json.data){throw new Error('No data returned from sheet');}
+
+    const sheetRows=json.data; // array of report objects
+    // Merge: sheet data takes priority; keep local-only entries not in sheet
+    const sheetIds=new Set(sheetRows.map(r=>r.labId||r.sampleId));
+    const localOnly=savedReports.filter(r=>!(sheetIds.has(r.labId)||sheetIds.has(r.sampleId)));
+
+    // Parse tests JSON string if it's a string (from sheet)
+    const parsed=sheetRows.map(r=>{
+      if(typeof r.tests==='string'){
+        try{r.tests=JSON.parse(r.tests);}catch(e){r.tests={};}
+      }
+      return r;
+    });
+
+    savedReports=[...parsed,...localOnly];
+    // Sort by savedAt descending
+    savedReports.sort((a,b)=>new Date(b.savedAt||0)-new Date(a.savedAt||0));
+    localStorage.setItem('labRep3',JSON.stringify(savedReports));
+    renderSaved();
+
+    const t=new Date();
+    const ts=`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+    info.textContent=`Last sync: ${ts}`;
+    showSyncStatus(`✅ Synced ${sheetRows.length} report(s) from sheet.`,'ok');
+  }catch(e){
+    // Fallback: if Apps Script doesn't support getAll yet, show instructions
+    showSyncStatus(`⚠️ Sync failed: ${e.message}. Make sure your Apps Script supports ?action=getAll. See console for details.`,'er');
+    console.error('Sync error:',e);
+    info.textContent='Sync failed';
+  }finally{
+    btn.disabled=false;
+    icon.textContent='☁️';
+    icon.className='';
+  }
+}
+
+function showSyncStatus(msg,type){
+  const d=document.getElementById('syncStatus');
+  d.style.display='block';
+  d.style.background=type==='ok'?'#e8f5e9':type==='er'?'#ffebee':'#e3f2fd';
+  d.style.color=type==='ok'?'#1b5e20':type==='er'?'#b71c1c':'#0d47a1';
+  d.style.border=`1px solid ${type==='ok'?'#a5d6a7':type==='er'?'#ef9a9a':'#90caf9'}`;
+  d.textContent=msg;
+  if(type==='ok')setTimeout(()=>{d.style.display='none';},4000);
+}
+
 function doPrint(){
   window.print();
-  // After print dialog closes, clean up
   setTimeout(()=>{closePrint();clearForm();},1000);
 }
 function closePrint(){
